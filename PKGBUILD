@@ -1,5 +1,5 @@
 pkgname=ppsspp
-pkgver=1.1.1
+pkgver=1.2.1
 pkgrel=1
 pkgdesc='A PSP emulator written in C++'
 arch=('x86_64')
