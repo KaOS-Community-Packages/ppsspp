@@ -1,62 +1,46 @@
 pkgname=ppsspp
-pkgver=1.2.2
+pkgver=1.3
 pkgrel=1
 pkgdesc='A PSP emulator written in C++'
 arch=('x86_64')
 url='http://www.ppsspp.org/'
 license=('GPL2')
-depends=('ffmpeg' 'sdl2')
-makedepends=('cmake' 'git' 'glu' 'qt5-tools')
+depends=('ffmpeg' 'sdl2' 'glu' 'qt5-multimedia')
+makedepends=('cmake' 'qt5-tools' 'git')
 source=("git+https://github.com/hrydgard/ppsspp.git#tag=v${pkgver}"
-        'git+https://github.com/hrydgard/ppsspp-lang.git#commit=e32b7eb'
-        'ppsspp-armips::git+https://github.com/Kingcom/armips.git#commit=c72111f'
+        'git+https://github.com/hrydgard/ppsspp-lang.git#commit=cdf4a8d'
+        'ppsspp-armips::git+https://github.com/Kingcom/armips.git#commit=1ffab37' 
         'ppsspp.desktop')
-sha256sums=('SKIP'
-            'SKIP'
-            'SKIP'
-            '1c332702d0aeced07df7e12ba8530bc3f19a52bc76c355f6c84c141becfd46d8')
-
+md5sums=('SKIP'
+         'SKIP'
+         'SKIP'
+         'c47ea8cda16cf8678aa7a7a1a826ca42')
+         
 prepare() {
-  cd ppsspp
-
+  cd ${pkgname}
+  
   for submodule in lang ext/armips; do
     git submodule init ${submodule}
     git config submodule.${submodule}.url ../ppsspp-${submodule#*/}
     git submodule update ${submodule}
   done
-
-  for ui in sdl qt; do
-    if [[ -d build-$ui ]]; then
-      rm -rf build-$ui
-    fi
-    mkdir build-$ui
-  done
+  
+  sed -i 's|LREL_TOOL = lrelease|LREL_TOOL = lrelease-qt5|' Qt/PPSSPP.pro
 }
 
 build() {
-  cd ppsspp/build-sdl
-
-  cmake .. \
-    -DCMAKE_BUILD_TYPE='Release' \
-    -DCMAKE_SKIP_RPATH='TRUE' \
-    -DUSE_SYSTEM_FFMPEG='TRUE'
-  make
-
-  cd ../build-qt
-
-  qmake-qt5 CONFIG+='release' CONFIG+='system_ffmpeg' ../Qt/PPSSPPQt.pro
+  cd ${pkgname}
+  
+  /usr/lib/qt5/bin/qmake CONFIG+='release' CONFIG+='system_ffmpeg' Qt/PPSSPPQt.pro
   make
 }
 
 package() {
+  cd ${pkgname}
 
-  cd ppsspp/build-sdl
-
-  install -dm 755 "${pkgdir}"/usr/{bin,share/{applications,pixmaps,ppsspp}}
-  install -m 755 PPSSPPSDL "${pkgdir}"/usr/bin/ppsspp
-  cp -dr --no-preserve='ownership' assets "${pkgdir}"/usr/share/ppsspp/
-  install -m 644 ../assets/unix-icons/icon-512.svg "${pkgdir}"/usr/share/pixmaps/ppsspp.svg
-  install -m 644 ../../ppsspp.desktop "${pkgdir}"/usr/share/applications/
+  install -dm 755 ${pkgdir}/usr/{bin,share/{applications,pixmaps}}
+  install -m 755 ppsspp ${pkgdir}/usr/bin/
+  install -m 644 assets/unix-icons/icon-512.svg ${pkgdir}/usr/share/pixmaps/ppsspp.svg
+  install -m 644 ../ppsspp.desktop ${pkgdir}/usr/share/applications/
 }
 
-# vim: ts=2 sw=2 et:
